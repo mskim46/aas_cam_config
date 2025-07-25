@@ -1,0 +1,29 @@
+{
+    "external_network": {
+        "interface": "enP1p1s0",
+        "mac_address": "36:08:fc:c6:ef:4b",
+        "ip_address": "192.168.0.100",
+        "gateway": "192.168.0.1",
+        "netmask": "255.255.255.0",
+        "dns_servers": ["8.8.8.8", "8.8.4.4"]
+    },
+    "camera_network": {
+        "interface": "enP8p1s0",
+        "mac_address": "3c:6d:66:01:80:5a",
+        "ip_address": "192.168.1.110",
+        "camera_ip": "192.168.1.168",
+        "gateway": "192.168.1.1",
+        "netmask": "255.255.255.0"
+    },
+    "camera": {
+        "ip_address": "192.168.1.168",
+        "rtsp_port": 554,
+        "gimbal_port": 2000,
+        "stream_path": "/main"
+    },
+    "settings": {
+        "backup_existing_config": true,
+        "restart_network_services": true,
+        "test_connectivity": true
+    }
+} 
