@@ -79,6 +79,34 @@ install_packages() {
     fi
 }
 
+# Disable NetworkManager completely
+disable_networkmanager() {
+    log "Disabling NetworkManager to prevent conflicts..."
+    
+    # Stop and disable NetworkManager
+    systemctl stop NetworkManager 2>/dev/null || true
+    systemctl disable NetworkManager 2>/dev/null || true
+    
+    # Create NetworkManager config directory
+    mkdir -p /etc/NetworkManager/conf.d
+    
+    # Set all interfaces as unmanaged
+    cat > /etc/NetworkManager/conf.d/99-unmanaged-all.conf << EOF
+[keyfile]
+unmanaged-devices=interface-name:enP1p1s0;interface-name:enP8p1s0;interface-name:enP*
+
+EOF
+    
+    log "NetworkManager disabled for all managed interfaces"
+}
+
+# Enable networking service
+enable_networking() {
+    log "Enabling networking service..."
+    systemctl enable networking 2>/dev/null || true
+    log "Networking service enabled"
+}
+
 # Create /etc/network/interfaces configuration
 create_network_config() {
     local external_interface=$(get_json_value '.external_network.interface')
@@ -155,16 +183,25 @@ EOF
 restart_networking() {
     log "Restarting networking services..."
     
-    # Stop NetworkManager temporarily
-    systemctl stop NetworkManager
+    # Disable NetworkManager completely
+    disable_networkmanager
+    enable_networking
+    
+    # Bring down existing interfaces first
+    local external_interface=$(get_json_value '.external_network.interface')
+    local camera_interface=$(get_json_value '.camera_network.interface')
+    
+    log "Bringing down existing interfaces..."
+    ifdown $external_interface 2>/dev/null || true
+    ifdown $camera_interface 2>/dev/null || true
+    
+    # Wait a moment
+    sleep 2
     
     # Restart networking
     systemctl restart networking
     
-    # Start NetworkManager again
-    systemctl start NetworkManager
-    
-    log "Networking services restarted"
+    log "Networking services restarted (NetworkManager disabled)"
 }
 
 # Test network connectivity
@@ -251,6 +288,42 @@ show_usage() {
     echo "  - Camera network (enP8p1s0) for camera communication"
 }
 
+# Safely restore network configuration
+restore_network_config() {
+    log "Restoring network configuration..."
+    
+    # Stop NetworkManager
+    systemctl stop NetworkManager
+    
+    # Find the most recent backup
+    local backup_file=$(ls -t /etc/network/interfaces.backup.* 2>/dev/null | head -1)
+    
+    if [[ -n "$backup_file" ]]; then
+        cp "$backup_file" /etc/network/interfaces
+        log "Restored from backup: $backup_file"
+    else
+        # Create a basic configuration
+        cat > /etc/network/interfaces << EOF
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+EOF
+        log "Created basic network configuration"
+    fi
+    
+    # Restart networking
+    systemctl restart networking
+    systemctl start NetworkManager
+    
+    log "Network configuration restored"
+}
+
 # Main function
 main() {
     log "Starting Jetson Orin Dual Network Configuration"
@@ -273,11 +346,13 @@ main() {
     # Create network configuration
     create_network_config
     
-    # Disable NetworkManager for the interfaces
-    disable_networkmanager
-    
-    # Restart networking
-    restart_networking
+    # Restart networking with error handling
+    if ! restart_networking; then
+        error "Failed to restart networking services"
+        warning "Attempting to restore previous configuration..."
+        restore_network_config
+        exit 1
+    fi
     
     # Test connectivity
     test_connectivity
