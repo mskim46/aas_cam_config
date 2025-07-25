@@ -173,7 +173,7 @@ test_connectivity() {
     local external_gateway=$(get_json_value '.external_network.gateway')
     local camera_ip=$(get_json_value '.camera_network.ip_address')
     local camera_gateway=$(get_json_value '.camera_network.gateway')
-    local camera_target=$(get_json_value '.camera.ip_address')
+    local camera_target=$(get_json_value '.camera_network.camera_ip')
     
     log "Testing network connectivity..."
     
@@ -233,11 +233,7 @@ show_config() {
     echo "  MAC: $(get_json_value '.camera_network.mac_address')"
     echo "  IP: $(get_json_value '.camera_network.ip_address')"
     echo "  Gateway: $(get_json_value '.camera_network.gateway')"
-    echo ""
-    echo "Camera Device:"
-    echo "  IP: $(get_json_value '.camera.ip_address')"
-    echo "  RTSP Port: $(get_json_value '.camera.rtsp_port')"
-    echo "  Gimbal Port: $(get_json_value '.camera.gimbal_port')"
+    echo "  Camera IP: $(get_json_value '.camera_network.camera_ip')"
 }
 
 # Show usage
