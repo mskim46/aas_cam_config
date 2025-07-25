@@ -1,0 +1,36 @@
+{
+    "camera": {
+        "ip_address": "rtsp://192.168.1.168:554/main",
+        "username": "",
+        "password": "",
+        "rtsp": {
+            "transport": "tcp",
+            "buffer_size": 2000000,
+            "timeout": 5
+        }
+    },
+    "gimbal": {
+        "ip_address": "192.168.1.168",
+        "connection_type": "tcp",
+        "port": "2000",
+        "pan_range": [-180, 180],
+        "tilt_range": [-90, 90]
+    },
+    "stream_modes": {
+        "normal": {
+            "resolution": "1920x1080",
+            "fps": 30,
+            "bitrate": 4000000
+        },
+        "inference": {
+            "resolution": "1280x720", 
+            "fps": 15,
+            "bitrate": 2000000
+        },
+        "tracking": {
+            "resolution": "1920x1080",
+            "fps": 25,
+            "bitrate": 3000000
+        }
+    }
+}
